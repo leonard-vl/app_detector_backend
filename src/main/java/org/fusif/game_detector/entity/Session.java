@@ -9,19 +9,21 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "session", schema = "game_detector")
-public final class Session {
+@Table(name = "session")
+public class Session {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    private Long id;
+    private Integer id;
 
     @Column(name = "session_start", nullable = false)
     private Instant sessionStart;
 
-    @Column(name = "session_stop", nullable = false)
+    @Column(name = "session_stop")
     private Instant sessionStop;
 
-    @Column(name = "game_name", nullable = false, length = 128)
-    private String gameName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "application_id")
+    private Application application;
+
 }

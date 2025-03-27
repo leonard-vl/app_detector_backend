@@ -16,23 +16,7 @@ import java.util.List;
 public class SessionService {
     ISessionRepository sessionRepository;
 
-    public void saveSession(Session session) {
-        sessionRepository.save(session);
-    }
-
-    public void deleteSession(Session session) {
-        sessionRepository.delete(session);
-    }
-
-    public Session getSessionById(Long id) {
-        return sessionRepository.findById(id).orElseThrow();
-    }
-
-    public Session getSessionByGameName(String gameName) {
-        return sessionRepository.findByGameName(gameName).orElseThrow();
-    }
-
-    public List<Session> getSessionsByGameName(String gameName) {
-        return sessionRepository.findSessionsByGameName(gameName);
+    public void saveSessions(List<Session> sessions) {
+        sessionRepository.saveAll(sessions);
     }
 }

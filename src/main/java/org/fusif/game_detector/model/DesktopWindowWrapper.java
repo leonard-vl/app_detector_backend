@@ -4,6 +4,8 @@ import com.sun.jna.platform.DesktopWindow;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.Objects;
+
 @Data
 @AllArgsConstructor
 public class DesktopWindowWrapper {
@@ -16,5 +18,10 @@ public class DesktopWindowWrapper {
         if (!(o instanceof DesktopWindowWrapper that)) return false;
 
         return that.window.getFilePath().equals(this.window.getFilePath());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(window.getFilePath().hashCode());
     }
 }
