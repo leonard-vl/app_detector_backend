@@ -3,6 +3,7 @@ package org.fusif.game_detector.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -24,7 +25,7 @@ public class Application {
     @Column(name = "path", nullable = false, length = 256, unique = true)
     private String path;
 
-    @Column(name = "title", nullable = false, length = 64)
+    @Column(name = "title", nullable = false, length = 256)
     private String title;
 
     @Column(name = "alias", length = 64)

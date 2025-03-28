@@ -2,10 +2,11 @@ package org.fusif.game_detector.scheduler;
 
 
 import com.sun.jna.platform.WindowUtils;
+import jakarta.annotation.PreDestroy;
 import org.fusif.game_detector.entity.Application;
 import org.fusif.game_detector.entity.Session;
 import org.fusif.game_detector.model.DesktopWindowWrapper;
-import org.fusif.game_detector.service.GameService;
+import org.fusif.game_detector.service.ApplicationService;
 import org.fusif.game_detector.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,15 +19,17 @@ import java.util.stream.Collectors;
 @Component
 public class WindowsScheduler {
     SessionService sessionService;
-    GameService gameService;
+    ApplicationService applicationService;
 
     Set<DesktopWindowWrapper> previousWindows = new HashSet<>();
     Set<Session> runningSessions = new HashSet<>();
 
     @Autowired
-    public WindowsScheduler(SessionService sessionService, GameService gameService) {
+    public WindowsScheduler(SessionService sessionService, ApplicationService applicationService) {
         this.sessionService = sessionService;
-        this.gameService = gameService;
+        this.applicationService = applicationService;
+    }
+
     @PreDestroy
     public void shutdown() {
         this.runningSessions.forEach(s -> s.setSessionStop(Instant.now()));
@@ -36,7 +39,7 @@ public class WindowsScheduler {
 
     @Scheduled(fixedRate = 5000)
     public void updateWindows() {
-        Set<DesktopWindowWrapper> currentWindows = getCurrentWindows(true);
+        Set<DesktopWindowWrapper> currentWindows = getCurrentWindows(false);
 
         Set<DesktopWindowWrapper> closedWindows = getClosedWindows(currentWindows);
         Set<DesktopWindowWrapper> newWindows = getNewWindows(currentWindows);
@@ -62,18 +65,27 @@ public class WindowsScheduler {
     }
 
     public void initialiseSessions(Set<DesktopWindowWrapper> newWindows) {
-        newWindows.forEach(w -> {
-            String gamePath = w.getWindow().getFilePath();
+        List<Application> newApplicationsToSave = new ArrayList<>();
 
-            Optional<Application> existingApplication = this.gameService.getGameByPath(gamePath);
+        newWindows.forEach(w -> {
             Application application;
+            String appPath = w.getWindow().getFilePath();
+
+            Optional<Application> existingApplication = this.applicationService.getApplicationByPath(appPath);
+
+            if (existingApplication.isPresent() && Boolean.TRUE.equals(!existingApplication.get().getSaveSession())) {
+                return;
+            }
 
             if (existingApplication.isPresent()) {
                 application = existingApplication.get();
             } else {
                 application = new Application();
-                application.setPath(gamePath);
+                application.setPath(appPath);
                 application.setTitle(w.getWindow().getTitle());
+                application.setSaveSession(true);
+
+                newApplicationsToSave.add(application);
             }
 
             Session session = new Session();
@@ -82,6 +94,8 @@ public class WindowsScheduler {
 
             runningSessions.add(session);
         });
+
+        this.applicationService.saveApplications(newApplicationsToSave);
     }
 
     public void closeSessions(Set<DesktopWindowWrapper> closedWindows) {
