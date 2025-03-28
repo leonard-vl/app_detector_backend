@@ -27,6 +27,11 @@ public class WindowsScheduler {
     public WindowsScheduler(SessionService sessionService, GameService gameService) {
         this.sessionService = sessionService;
         this.gameService = gameService;
+    @PreDestroy
+    public void shutdown() {
+        this.runningSessions.forEach(s -> s.setSessionStop(Instant.now()));
+
+        this.saveSessions(runningSessions);
     }
 
     @Scheduled(fixedRate = 5000)
