@@ -30,6 +30,10 @@ public class Application {
     @Column(name = "alias", length = 64)
     private String alias;
 
+    @ColumnDefault("1")
+    @Column(name = "save_session")
+    private Boolean saveSession;
+
     @OneToMany(mappedBy = "application")
     private Set<Session> sessions = new LinkedHashSet<>();
 

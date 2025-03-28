@@ -88,8 +88,12 @@ public class WindowsScheduler {
     }
 
     public Set<DesktopWindowWrapper> getCurrentWindows(boolean onlyVisibleWindows) {
+        Set<String> applicationsToIgnorePaths = this.applicationService.getApplicationsBySaveSessionFalse().stream()
+                .map(Application::getPath)
+                .collect(Collectors.toSet());
+
         return WindowUtils.getAllWindows(onlyVisibleWindows).stream()
-                .filter(w -> !w.getTitle().isEmpty())
+                .filter(w -> !w.getTitle().isEmpty() && !applicationsToIgnorePaths.contains(w.getFilePath()))
                 .map(DesktopWindowWrapper::new)
                 .collect(Collectors.toSet());
     }
