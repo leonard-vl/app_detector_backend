@@ -3,6 +3,7 @@ package org.fusif.game_detector.scheduler;
 
 import com.sun.jna.platform.WindowUtils;
 import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 import org.fusif.game_detector.entity.Application;
 import org.fusif.game_detector.entity.Session;
 import org.fusif.game_detector.model.DesktopWindowWrapper;
@@ -16,6 +17,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class WindowsScheduler {
     SessionService sessionService;
@@ -35,21 +37,27 @@ public class WindowsScheduler {
         this.runningSessions.forEach(s -> s.setSessionStop(Instant.now()));
 
         this.saveSessions(runningSessions);
+        log.info("Saved {} running sessions on shutdown", runningSessions.size());
     }
 
     @Scheduled(fixedRate = 5000)
     public void updateWindows() {
-        Set<DesktopWindowWrapper> currentWindows = getCurrentWindows(false);
+        log.info("Updating windows...");
+        try {
+            Set<DesktopWindowWrapper> currentWindows = getCurrentWindows(false);
 
-        Set<DesktopWindowWrapper> closedWindows = getClosedWindows(currentWindows);
-        Set<DesktopWindowWrapper> newWindows = getNewWindows(currentWindows);
+            Set<DesktopWindowWrapper> closedWindows = getClosedWindows(currentWindows);
+            Set<DesktopWindowWrapper> newWindows = getNewWindows(currentWindows);
 
-        previousWindows = currentWindows;
+            previousWindows = currentWindows;
 
-        this.initialiseSessions(newWindows);
-        this.closeSessions(closedWindows);
+            this.initialiseSessions(newWindows);
+            this.closeSessions(closedWindows);
 
-        this.saveSessions(runningSessions);
+            this.saveSessions(runningSessions);
+        } catch (Exception e) {
+            log.error("Error updating windows", e);
+        }
     }
 
     public void saveSessions(Set<Session> sessions) {
@@ -62,6 +70,7 @@ public class WindowsScheduler {
                 .collect(Collectors.toSet());
 
         this.sessionService.saveSessions(completeSessions);
+        log.info("Saved {} complete sessions", completeSessions.size());
     }
 
     public void initialiseSessions(Set<DesktopWindowWrapper> newWindows) {
@@ -96,6 +105,9 @@ public class WindowsScheduler {
         });
 
         this.applicationService.saveApplications(newApplicationsToSave);
+        log.info("Saved {} new applications: {}", newApplicationsToSave.size(),
+                newApplicationsToSave.stream().map(Application::getTitle).collect(Collectors.joining(", "))
+        );
     }
 
     public void closeSessions(Set<DesktopWindowWrapper> closedWindows) {
