@@ -2,6 +2,7 @@ package org.fusif.game_detector.scheduler;
 
 import com.sun.jna.platform.DesktopWindow;
 import com.sun.jna.platform.WindowUtils;
+import org.fusif.game_detector.entity.Application;
 import org.fusif.game_detector.model.DesktopWindowWrapper;
 import org.fusif.game_detector.service.ApplicationService;
 import org.fusif.game_detector.service.SessionService;
@@ -28,32 +29,52 @@ class WindowsSchedulerTest {
     @Mock
     ApplicationService applicationService;
 
-
     @Test
-    void assert_get_only_windows_with_title() {
+    void assert_get_only_windows_with_title_with_saveSession_true() {
+        DesktopWindow windowWithTitle1 = mock(DesktopWindow.class);
+        when(windowWithTitle1.getTitle()).thenReturn("title1");
+        when(windowWithTitle1.getFilePath()).thenReturn("Path1");
 
-        DesktopWindow mockWindow1 = mock(DesktopWindow.class);
-        when(mockWindow1.getTitle()).thenReturn("App 1");
-        when(mockWindow1.getFilePath()).thenReturn("Path 1");
+        DesktopWindow windowWithTitle2 = mock(DesktopWindow.class);
+        when(windowWithTitle2.getTitle()).thenReturn("title2");
+        when(windowWithTitle2.getFilePath()).thenReturn("Path2");
 
-        DesktopWindow mockWindow2 = mock(DesktopWindow.class);
-        when(mockWindow2.getTitle()).thenReturn("App 2");
-        when(mockWindow2.getFilePath()).thenReturn("Path 2");
+        DesktopWindow windowWithTitle3 = mock(DesktopWindow.class);
+        when(windowWithTitle3.getTitle()).thenReturn("title3");
+        when(windowWithTitle3.getFilePath()).thenReturn("path3");
 
-        DesktopWindow mockWindow3 = mock(DesktopWindow.class);
-        when(mockWindow3.getTitle()).thenReturn("");
+        DesktopWindow windowWithTitle4 = mock(DesktopWindow.class);
+        when(windowWithTitle4.getTitle()).thenReturn("title4");
+        when(windowWithTitle4.getFilePath()).thenReturn("path4");
 
+        DesktopWindow windowWithoutTitle1 = mock(DesktopWindow.class);
+        when(windowWithoutTitle1.getTitle()).thenReturn("");
+        when(windowWithTitle2.getFilePath()).thenReturn("Path5");
+
+        Application application1 = mock(Application.class);
+        Application application2 = mock(Application.class);
+        when(application1.getPath()).thenReturn("path3");
+        when(application2.getPath()).thenReturn("path4");
+
+        when(applicationService.getApplicationsBySaveSessionFalse())
+                .thenReturn(List.of(application1, application2));
 
         try (MockedStatic<WindowUtils> windowUtilsMockedStatic = Mockito.mockStatic(WindowUtils.class)) {
             windowUtilsMockedStatic.when(() -> WindowUtils.getAllWindows(true))
-                    .thenReturn(List.of(mockWindow1, mockWindow2, mockWindow3));
+                    .thenReturn(List.of(
+                            windowWithTitle1,
+                            windowWithTitle2,
+                            windowWithTitle3,
+                            windowWithTitle4,
+                            windowWithoutTitle1
+                    ));
 
             WindowsScheduler windowsScheduler = new WindowsScheduler(sessionService, applicationService);
             Set<DesktopWindowWrapper> currentWindows = windowsScheduler.getCurrentWindows(true);
 
             assertEquals(2, currentWindows.size());
-            assertTrue(currentWindows.stream().anyMatch(w -> w.getWindow().getTitle().equals("App 1")));
-            assertTrue(currentWindows.stream().anyMatch(w -> w.getWindow().getTitle().equals("App 2")));
+            assertTrue(currentWindows.stream().anyMatch(w -> w.getWindow().getTitle().equals("title1")));
+            assertTrue(currentWindows.stream().anyMatch(w -> w.getWindow().getTitle().equals("title2")));
         }
     }
 
