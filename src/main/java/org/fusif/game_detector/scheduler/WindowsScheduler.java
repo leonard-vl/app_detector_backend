@@ -42,7 +42,6 @@ public class WindowsScheduler {
 
     @Scheduled(fixedRate = 5000)
     public void updateWindows() {
-        log.info("Updating windows...");
         try {
             Set<DesktopWindowWrapper> currentWindows = getCurrentWindows(false);
 
@@ -69,8 +68,10 @@ public class WindowsScheduler {
                 .filter(s -> s.getSessionStop() == null)
                 .collect(Collectors.toSet());
 
-        this.sessionService.saveSessions(completeSessions);
-        log.info("Saved {} complete sessions", completeSessions.size());
+        if (!completeSessions.isEmpty()) {
+            this.sessionService.saveSessions(completeSessions);
+            log.info("Saved {} complete sessions", completeSessions.size());
+        }
     }
 
     public void initialiseSessions(Set<DesktopWindowWrapper> newWindows) {
@@ -104,10 +105,12 @@ public class WindowsScheduler {
             runningSessions.add(session);
         });
 
-        this.applicationService.saveApplications(newApplicationsToSave);
-        log.info("Saved {} new applications: {}", newApplicationsToSave.size(),
-                newApplicationsToSave.stream().map(Application::getTitle).collect(Collectors.joining(", "))
-        );
+        if (!newApplicationsToSave.isEmpty()) {
+            this.applicationService.saveApplications(newApplicationsToSave);
+            log.info("Saved {} new applications: {}", newApplicationsToSave.size(),
+                    newApplicationsToSave.stream().map(Application::getTitle).collect(Collectors.joining(", "))
+            );
+        }
     }
 
     public void closeSessions(Set<DesktopWindowWrapper> closedWindows) {
