@@ -34,7 +34,8 @@ public class WindowsScheduler {
 
     @PreDestroy
     public void shutdown() {
-        this.runningSessions.forEach(s -> s.setSessionStop(Instant.now()));
+        var now = Instant.now();
+        this.runningSessions.forEach(s -> s.setSessionStop(now));
 
         this.saveSessions(runningSessions);
         log.info("Saved {} running sessions on shutdown", runningSessions.size());
@@ -76,6 +77,7 @@ public class WindowsScheduler {
 
     public void initialiseSessions(Set<DesktopWindowWrapper> newWindows) {
         List<Application> newApplicationsToSave = new ArrayList<>();
+        var now = Instant.now();
 
         newWindows.forEach(w -> {
             Application application;
@@ -100,7 +102,7 @@ public class WindowsScheduler {
 
             Session session = new Session();
             session.setApplication(application);
-            session.setSessionStart(Instant.now());
+            session.setSessionStart(now);
 
             runningSessions.add(session);
         });
@@ -114,9 +116,10 @@ public class WindowsScheduler {
     }
 
     public void closeSessions(Set<DesktopWindowWrapper> closedWindows) {
+        var now = Instant.now();
         closedWindows.forEach(w -> runningSessions.forEach(s -> {
             if (s.getApplication().getPath().equals(w.getWindow().getFilePath())) {
-                s.setSessionStop(Instant.now());
+                s.setSessionStop(now);
             }
         }));
     }
